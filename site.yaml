@@ -1,0 +1,73 @@
+- name: Deploy HAProxy and Web Servers
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks: []
+
+- name: Install and Configure HAProxy
+  hosts: HAproxy
+  become: true
+  tasks:
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install HAProxy
+      apt:
+        name: haproxy
+        state: present
+
+    - name: Configure HAProxy using template
+      template:
+        src: haproxy.cfg.j2
+        dest: /etc/haproxy/haproxy.cfg
+        
+- name: Enable and restart HAProxy service
+      service:
+        name: haproxy
+        enabled: true
+        state: restarted
+
+- name: Setup Flask Web Servers
+  hosts: webservers
+  become: true
+  gather_facts: true
+  tasks:
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Python, pip, and venv
+      apt:
+        name:
+          - python3
+          - python3-pip
+          - python3-venv
+        state: present
+
+    - name: Install Flask using pip
+      pip:
+        executable: pip3
+        name: flask
+        state: latest
+
+    - name: Install Gunicorn
+      apt:
+        name: gunicorn
+        state: present
+
+    - name: Copy Flask application
+      copy: 
+        src: application2.py
+        dest: /home/ubuntu/application2.py
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
+
+    - name: Run Flask app with Gunicorn
+      shell: gunicorn -w 2 -D -b 0.0.0.0:8080 application2:app
+      args:
+        chdir: /home/ubuntu
