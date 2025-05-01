@@ -1,15 +1,15 @@
-- name: Deploy HAProxy and Web Servers
-  hosts: all
-  become: true
-  gather_facts: true
+# Ansible Playbook: HAProxy Load Balancer and Flask Web Servers
 
+- name: Setup HAProxy and Web Servers
+  hosts: all
+  gather_facts: true
+  become: true
   tasks: []
 
 - name: Install and Configure HAProxy
   hosts: HAproxy
   become: true
   tasks:
-
     - name: Update apt cache
       apt:
         update_cache: yes
@@ -19,28 +19,30 @@
         name: haproxy
         state: present
 
-    - name: Configure HAProxy using template
+    - name: Deploy HAProxy configuration
       template:
         src: haproxy.cfg.j2
         dest: /etc/haproxy/haproxy.cfg
-        
-- name: Enable and restart HAProxy service
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Restart HAProxy
       service:
         name: haproxy
-        enabled: true
         state: restarted
+        enabled: true
 
-- name: Setup Flask Web Servers
+- name: Setup Flask Application Servers
   hosts: webservers
   become: true
   gather_facts: true
   tasks:
-
     - name: Update apt cache
       apt:
         update_cache: yes
 
-    - name: Install Python, pip, and venv
+    - name: Install Python3, pip3, and venv
       apt:
         name:
           - python3
@@ -60,14 +62,14 @@
         state: present
 
     - name: Copy Flask application
-      copy: 
+      copy:
         src: application2.py
         dest: /home/ubuntu/application2.py
         owner: ubuntu
         group: ubuntu
         mode: '0644'
 
-    - name: Run Flask app with Gunicorn
+    - name: Run Flask application with Gunicorn
       shell: gunicorn -w 2 -D -b 0.0.0.0:8080 application2:app
       args:
         chdir: /home/ubuntu
