@@ -1,7 +1,7 @@
 PasswordAuthentication no
  StrictHostKeyChecking no
 
-   Host Bastion
+   Host bastionNSO
           HostName 188.95.226.205
           User ubuntu
           IdentityFile ~/.ssh/keypair1
@@ -15,16 +15,16 @@ PasswordAuthentication no
           HostName 10.1.0.5
           User ubuntu
           IdentityFile ~/.ssh/keypair1
-          ProxyJump Bastion
+          ProxyJump bastionNSO
 
   Host DevB
           HostName 10.1.0.15
           User ubuntu
           IdentityFile ~/.ssh/keypair1
-          ProxyJump Bastion
+          ProxyJump bastionNSO
 
   Host DevC
           HostName 10.1.0.14
           User ubuntu
           IdentityFile ~/.ssh/keypair1
-          ProxyJump Bastion
+          ProxyJump bastionNSO
