@@ -43,5 +43,5 @@ backend web_servers
 
   # Loop through Ansible group 'webservers' and configure each server
   {% for dev_servers in groups['webservers'] %}
-  server  {{ dev_servers }} {{ hostvars[dev_servers]["ansible_default_ipv4"]["address"]}}:8080
+  server  {{ dev_servers }} {{ hostvars[dev_servers]["ansible_default_ipv4"]["address"]}}:8000
   {% endfor %}
