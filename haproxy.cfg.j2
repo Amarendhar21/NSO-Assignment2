@@ -43,6 +43,6 @@ backend web_servers
   option httpchk GET /
 
   {% for dev_servers in groups['webservers'] %}
-     {% set ip = hostvars[dev_servers]['ansible_default_ipv4']['address'] | default(hostvars[dev_servers]['ansible_host']) %}
-  server {{ dev_servers }} {{ ip }}:8000 check
+  {% set ip = hostvars[dev_servers]['ansible_default_ipv4']['address'] | default(hostvars[dev_servers]['ansible_host']) %}
+     server {{ dev_servers }} {{ ip }}:8000 check
   {% endfor %}
