@@ -33,7 +33,7 @@ defaults
   errorfile 503 /etc/haproxy/errors/503.http
   errorfile 504 /etc/haproxy/errors/504.http
 
-frontend load_balacer
+frontend load_balancer
   bind *:80
   default_backend web_servers
 
@@ -43,5 +43,6 @@ backend web_servers
   option httpchk GET /
 
   {% for dev_servers in groups['webservers'] %}
-  server {{ dev_servers }} {{ hostvars[dev_servers]['ansible_default_ipv4']['address'] }}:8000 check
+     {% set ip = hostvars[dev_servers]['ansible_default_ipv4']['address'] | default(hostvars[dev_servers]['ansible_host']) %}
+  server {{ dev_servers }} {{ ip }}:8000 check
   {% endfor %}
