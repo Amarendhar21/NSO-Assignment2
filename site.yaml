@@ -65,7 +65,7 @@
         mode: '0644'
 
     - name: Run Flask application using Gunicorn
-      shell: gunicorn -w 2 -D -b 0.0.0.0:8080 application2:app
+      shell: gunicorn -w 2 -D -b 0.0.0.0:8000 application2:app
       args:
         chdir: /home/ubuntu
 
