@@ -57,7 +57,7 @@
         name: gunicorn
         state: present
 
-    - name: Copy Application2.py
+    - name: Copy Flask application
       copy:
         src: "{{ playbook_dir }}/application2.py"
         dest: /home/ubuntu/application2.py
@@ -75,24 +75,22 @@
 
   tasks:
     - name: Testing HAproxy - 1st time
-      shell: curl localhost
+      shell: curl http://localhost
       register: output1
       args:
         warn: false
     - debug: var=output1.stdout
 
     - name: Testing HAproxy - 2nd time
-      shell: curl localhost
+      shell: curl http://localhost
       register: output2
       args:
         warn: false
     - debug: var=output2.stdout
 
     - name: Testing HAproxy - 3rd time
-      shell: curl localhost
+      shell: curl http://localhost
       register: output3
       args:
         warn: false
     - debug: var=output3.stdout
-
-  
