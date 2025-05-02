@@ -1,44 +1,40 @@
-# Ansible Playbook: HAProxy Load Balancer and Flask Web Servers
-
-- name: Setup HAProxy and Web Servers
+- name: Configure all hosts
   hosts: all
   gather_facts: true
-  become: true
-  tasks: []
 
-- name: Install and Configure HAProxy
+- name: Set up HAProxy server
   hosts: HAproxy
   become: true
+  gather_facts: true
+
   tasks:
-    - name: Update apt cache
+    - name: Apt update
       apt:
         update_cache: yes
 
-    - name: Install HAProxy
+    - name: Install HAPROXY
       apt:
         name: haproxy
         state: present
 
-    - name: Deploy HAProxy configuration
+    - name: Configure haproxy
       template:
-        src: haproxy.cfg.j2
+        src: "{{ playbook_dir }}/haproxy.cfg.j2"
         dest: /etc/haproxy/haproxy.cfg
-        owner: root
-        group: root
-        mode: '0644'
 
-    - name: Restart HAProxy
+    - name: Restart haproxy
       service:
         name: haproxy
         state: restarted
-        enabled: true
 
-- name: Setup Flask Application Servers
+- name: Set up web servers
   hosts: webservers
   become: true
+  become_method: sudo
   gather_facts: true
+
   tasks:
-    - name: Update apt cache
+    - name: Apt update
       apt:
         update_cache: yes
 
@@ -50,7 +46,7 @@
           - python3-venv
         state: present
 
-    - name: Install Flask using pip
+    - name: Install Flask
       pip:
         executable: pip3
         name: flask
@@ -61,15 +57,42 @@
         name: gunicorn
         state: present
 
-    - name: Copy Flask application
+    - name: Copy Application2.py
       copy:
-        src: application2.py
+        src: "{{ playbook_dir }}/application2.py"
         dest: /home/ubuntu/application2.py
         owner: ubuntu
-        group: ubuntu
         mode: '0644'
 
-    - name: Run Flask application with Gunicorn
+    - name: Run Flask application using Gunicorn
       shell: gunicorn -w 2 -D -b 0.0.0.0:8080 application2:app
       args:
         chdir: /home/ubuntu
+
+- name: Test HAProxy Load Balancing
+  hosts: HAproxy
+  become: true
+
+  tasks:
+    - name: Testing HAproxy - 1st time
+      shell: curl localhost
+      register: output1
+      args:
+        warn: false
+    - debug: var=output1.stdout
+
+    - name: Testing HAproxy - 2nd time
+      shell: curl localhost
+      register: output2
+      args:
+        warn: false
+    - debug: var=output2.stdout
+
+    - name: Testing HAproxy - 3rd time
+      shell: curl localhost
+      register: output3
+      args:
+        warn: false
+    - debug: var=output3.stdout
+
+  
