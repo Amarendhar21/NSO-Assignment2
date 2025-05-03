@@ -41,6 +41,6 @@ backend web_servers
 	mode http
 	balance roundrobin
 {% for dev_servers in groups['webservers'] %}
-        server  {{ dev_servers }} {{ hostvars[dev_servers]["ansible_default_ipv4"]["address"]}}:7000
+        server  {{ dev_servers }} {{ hostvars[dev_servers]["ansible_default_ipv4"]["address"]}}:80
 {% endfor %}
 
