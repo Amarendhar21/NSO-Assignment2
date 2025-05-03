@@ -34,7 +34,7 @@ defaults
 	errorfile 504 /etc/haproxy/errors/504.http
 
 frontend load_balacer
-	bind :80
+	bind *:80
 	default_backend web_servers
 
 backend web_servers
@@ -43,4 +43,3 @@ backend web_servers
 {% for dev_servers in groups['webservers'] %}
         server  {{ dev_servers }} {{ hostvars[dev_servers]["ansible_default_ipv4"]["address"]}}:80
 {% endfor %}
-
