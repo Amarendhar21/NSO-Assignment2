@@ -60,3 +60,5 @@
 
     - name: Running Flask application
       shell: gunicorn -w 2 -D -b 0.0.0.0:80 application2:app
+      args:
+        chdir: /home/ubuntu
