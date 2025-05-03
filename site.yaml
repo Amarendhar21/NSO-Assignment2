@@ -72,9 +72,21 @@
         group: ubuntu
         mode: '0644'
 
-    - name: Ensure Flask app is running
+    - name: Run Flask application
       shell: |
-        pkill -f "gunicorn.*application2:app" || true
-        gunicorn -w 2 -D -b 0.0.0.0:8080 application2:app
+        cd /home/ubuntu
+        nohup python3 application2.py > /dev/null 2>&1 &
       args:
         executable: /bin/bash
+      register: flask_start
+      changed_when: "'already in use' not in flask_start.stderr"
+
+    - name: Verify Flask is running
+      shell: pgrep -f "python3 application2.py"
+      register: flask_running
+      ignore_errors: yes
+
+    - name: Debug Flask status
+      debug:
+        var: flask_running.rc
+      
