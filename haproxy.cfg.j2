@@ -44,8 +44,3 @@ backend web_servers
     server  {{ dev_servers }} {{ hostvars[dev_servers]["ansible_default_ipv4"]["address"]}}:8080
 {% endfor %}
 
-listen stats
-    bind *:8404
-    stats enable
-    stats uri /monito
-    stats refresh 5s
