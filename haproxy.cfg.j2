@@ -42,7 +42,7 @@ backend web_servers
     balance roundrobin
     option httpchk HEAD / HTTP/1.1\r\nHost:localhost
     {% for server in groups['webservers'] %}
-    server {{ server }} {{ hostvars[server]['ansible_default_ipv4']['address'] }}:8080 check
+    server {{ server }} {{ hostvars[server]['ansible_default_ipv4']['address'] }}:8000 check
     {% endfor %}
 
 listen stats
