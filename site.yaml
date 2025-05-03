@@ -70,21 +70,31 @@
         dest: /home/ubuntu/application2.py
         owner: ubuntu
         group: ubuntu
-        mode: '0644'
+        mode: '0755'
 
-    - name: Run Flask application
+    - name: Install additional Python packages
+      pip:
+        name:
+          - gunicorn
+          - gevent
+        executable: pip3
+
+    - name: Run Flask application with Gunicorn
       shell: |
+        pkill -f "gunicorn" || true
         cd /home/ubuntu
-        nohup python3 application2.py > /dev/null 2>&1 &
+        nohup gunicorn -w 2 -b 0.0.0.0:8000 --worker-class gevent application2:app > /dev/null 2>&1 &
       args:
         executable: /bin/bash
-      register: flask_start
-      changed_when: "'already in use' not in flask_start.stderr"
 
     - name: Verify Flask is running
-      shell: pgrep -f "python3 application2.py"
-      register: flask_running
+      shell: netstat -tulnp | grep 8000
+      register: flask_port_check
       ignore_errors: yes
+
+    - name: Debug port status
+      debug:
+        var: flask_port_check.stdout_lines
 
     - name: Debug Flask status
       debug:
