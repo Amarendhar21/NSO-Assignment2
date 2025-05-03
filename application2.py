@@ -15,5 +15,4 @@ def index():
     return f"{current_time} - Serving from {"host_name"} "({ip_address})\n"
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=True)
-
+    app.run(host="0.0.0.0", port=7000, debug=True)
