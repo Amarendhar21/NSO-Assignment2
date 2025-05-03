@@ -1,4 +1,4 @@
-from flask import Flask
+import Flask
 import time
 import socket
 
