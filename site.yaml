@@ -1,96 +1,80 @@
-- name: Configure all hosts
+---
+- name: Configure HAProxy and Web Servers
   hosts: all
   gather_facts: true
-
-- name: Set up HAProxy server
-  hosts: HAproxy
   become: true
-  gather_facts: true
 
   tasks:
-    - name: Apt update
+    - name: Update apt package index
       apt:
         update_cache: yes
+      when: ansible_os_family == 'Debian'
 
-    - name: Install HAPROXY
+- name: Configure HAProxy Server
+  hosts: HAproxy
+  become: true
+
+  tasks:
+    - name: Install HAProxy
       apt:
         name: haproxy
         state: present
+        update_cache: yes
 
-    - name: Configure haproxy
+    - name: Configure HAProxy
       template:
-        src: "{{ playbook_dir }}/haproxy.cfg.j2"
+        src: haproxy.cfg.j2
         dest: /etc/haproxy/haproxy.cfg
+        owner: root
+        group: root
+        mode: 0644
+      notify: Restart HAProxy
 
-    - name: Restart haproxy
+    - name: Enable and start HAProxy
+      service:
+        name: haproxy
+        enabled: yes
+        state: started
+
+  handlers:
+    - name: Restart HAProxy
       service:
         name: haproxy
         state: restarted
 
-- name: Set up web servers
+- name: Configure Web Servers
   hosts: webservers
   become: true
-  become_method: sudo
   gather_facts: true
 
   tasks:
-    - name: Apt update
-      apt:
-        update_cache: yes
-
-    - name: Install Python3, pip3, and venv
+    - name: Install required packages
       apt:
         name:
           - python3
           - python3-pip
           - python3-venv
+          - gunicorn
         state: present
+        update_cache: yes
 
-    - name: Install Flask
+    - name: Install Flask using pip
       pip:
-        executable: pip3
         name: flask
         state: latest
+        executable: pip3
 
-    - name: Install Gunicorn
-      apt:
-        name: gunicorn
-        state: present
-
-    - name: Copy Flask application
+    - name: Deploy Flask application
       copy:
-        src: "{{ playbook_dir }}/application2.py"
+        src: application2.py
         dest: /home/ubuntu/application2.py
         owner: ubuntu
+        group: ubuntu
         mode: '0644'
 
-    - name: Run Flask application using Gunicorn
-      shell: gunicorn -w 2 -D -b 0.0.0.0:8000 application2:app
+    - name: Ensure Flask app is running
+      shell: |
+        pkill -f "gunicorn.*application2:app" || true
+        gunicorn -w 2 -D -b 0.0.0.0:8080 application2:app
       args:
-        chdir: /home/ubuntu
-
-- name: Test HAProxy Load Balancing
-  hosts: HAproxy
-  become: true
-
-  tasks:
-    - name: Testing HAproxy - 1st time
-      shell: curl http://localhost
-      register: output1
-      args:
-        warn: false
-    - debug: var=output1.stdout
-
-    - name: Testing HAproxy - 2nd time
-      shell: curl http://localhost
-      register: output2
-      args:
-        warn: false
-    - debug: var=output2.stdout
-
-    - name: Testing HAproxy - 3rd time
-      shell: curl http://localhost
-      register: output3
-      args:
-        warn: false
-    - debug: var=output3.stdout
+        executable: /bin/bash
