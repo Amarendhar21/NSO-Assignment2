@@ -35,6 +35,7 @@ defaults
 
 frontend load_balacer
 	bind *:80
+ 	mode http
 	default_backend web_servers
 
 backend web_servers
