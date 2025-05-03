@@ -7,7 +7,7 @@ host_name = socket.gethostname()
 ip_address = socket.gethostbyname(host_name)
 
 
-app = Flask(__name__)
+app = flask.Flask(__name__)
 
 @app.route('/')
 def index():
