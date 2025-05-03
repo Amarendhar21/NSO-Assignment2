@@ -1,101 +1,62 @@
----
-- name: Configure HAProxy and Web Servers
-  hosts: all
+# haproxy configuration
+- hosts: all
   gather_facts: true
+- hosts: HAproxy
   become: true
 
   tasks:
-    - name: Update apt package index
+
+    - name: apt update
       apt:
         update_cache: yes
-      when: ansible_os_family == 'Debian'
 
-- name: Configure HAProxy Server
-  hosts: HAproxy
-  become: true
-
-  tasks:
-    - name: Install HAProxy
+    - name: Installing HAPROXY
       apt:
         name: haproxy
         state: present
-        update_cache: yes
 
-    - name: Configure HAProxy
+    - name: Configure haproxy
       template:
-        src: haproxy.cfg.j2
+        src: /$PWD/haproxy.cfg.j2
         dest: /etc/haproxy/haproxy.cfg
-        owner: root
-        group: root
-        mode: 0644
-      notify: Restart HAProxy
-
-    - name: Enable and start HAProxy
-      service:
-        name: haproxy
-        enabled: yes
-        state: started
-
-  handlers:
-    - name: Restart HAProxy
+ 
+    - name: Restart haproxy
       service:
         name: haproxy
         state: restarted
-
-- name: Configure Web Servers
-  hosts: webservers
+        
+- hosts: webservers
   become: true
+  become_method: sudo
   gather_facts: true
-
   tasks:
-    - name: Install required packages
+    - name: apt update
+      apt:
+        update_cache: true
+
+    - name: Install Python3, pip3, and venv
       apt:
         name:
           - python3
           - python3-pip
           - python3-venv
-          - gunicorn
         state: present
-        update_cache: yes
-
-    - name: Install Flask using pip
+    - name: Installing flask
       pip:
+        executable: pip3
         name: flask
         state: latest
-        executable: pip3
 
-    - name: Deploy Flask application
+    - name: Installing Gunicorn
+      apt:
+        name: gunicorn
+
+    - name: Copy Application2.py
       copy:
-        src: application2.py
+        src: /$PWD/application2.py
         dest: /home/ubuntu/application2.py
         owner: ubuntu
-        group: ubuntu
-        mode: '0755'
+        mode: '0644'
 
-    - name: Install additional Python packages
-      pip:
-        name:
-          - gunicorn
-          - gevent
-        executable: pip3
-
-    - name: Run Flask application with Gunicorn
-      shell: |
-        pkill -f "gunicorn" || true
-        cd /home/ubuntu
-        nohup gunicorn -w 2 -b 0.0.0.0:8000 --worker-class gevent application2:app > /dev/null 2>&1 &
-      args:
-        executable: /bin/bash
-
-    - name: Verify Flask is running
-      shell: netstat -tulnp | grep 8000
-      register: flask_port_check
-      ignore_errors: yes
-
-    - name: Debug port status
-      debug:
-        var: flask_port_check.stdout_lines
-
-    - name: Debug Flask status
-      debug:
-        var: flask_running.rc
+    - name: Running Flask application
+      shell: gunicorn -w 2 -D -b 0.0.0.0:8080 application2:app
