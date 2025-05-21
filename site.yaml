@@ -1,65 +1,97 @@
-# haproxy configuration
+---
 - hosts: all
-  gather_facts: true
-- hosts: HAproxy
-  become: true
+  gather_facts: yes
 
+- hosts: webservers
+  become: yes
+  become_method: sudo
   tasks:
-
-    - name: apt update
+    - name: Refresh package index
       apt:
         update_cache: yes
 
-    - name: Installing HAPROXY
-      apt:
-        name: haproxy
-        state: present
-
-    - name: Configure haproxy
-      template:
-        src: /$PWD/haproxy.cfg.j2
-        dest: /etc/haproxy/haproxy.cfg
- 
-    - name: Restart haproxy
-      service:
-        name: haproxy
-        state: restarted
-        
-- hosts: webservers
-  become: true
-  become_method: sudo
-  gather_facts: true
-  tasks:
-    - name: apt update
-      apt:
-        update_cache: true
-
-    - name: Install Python3, pip3, and venv
+    - name: Install Python and dependencies
       apt:
         name:
           - python3
           - python3-pip
           - python3-venv
         state: present
-    - name: Installing flask
+
+    - name: Ensure Flask is installed via pip
       pip:
         executable: pip3
         name: flask
-        state: latest
+        state: present
 
-    - name: Installing Gunicorn
+    - name: Install Gunicorn for serving Flask
       apt:
         name: gunicorn
+        state: present
 
-    - name: Copy Application2.py
+    - name: Deploy Flask application
       copy:
-        src: /$PWD/application2.py
+        src: application2.py
         dest: /home/ubuntu/application2.py
         owner: ubuntu
-        mode: '0644'
+        mode: '0755'
 
-    - name: Running Flask application
+    - name: Launch Flask app with Gunicorn
       shell: gunicorn -w 2 -D -b 0.0.0.0:80 application2:app
-      args:
-        chdir: /home/ubuntu
-        #Amarendhar 
+
+    - name: Install SNMP daemon
+      apt:
+        name: snmpd
+        state: latest
+
+    - name: Configure SNMP daemon
+      template:
+        src: snmpd.conf.j2
+        dest: /etc/snmp/snmpd.conf
+
+    - name: Restart SNMP daemon
+      service:
+        name: snmpd
+        state: restarted
+
+- hosts: HAproxy
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Refresh package index
+      apt:
+        update_cache: yes
+
+    - name: Install HAProxy
+      apt:
+        name: haproxy
+        state: latest
+
+    - name: Apply HAProxy configuration
+      template:
+        src: haproxy.cfg.j2
+        dest: /etc/haproxy/haproxy.cfg
+
+    - name: Install Nginx and SNMP tools
+      apt:
+        name:
+          - nginx
+          - snmp
+          - snmp-mibs-downloader
+        state: latest
+
+    - name: Apply Nginx configuration
+      template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/nginx.conf
+
+    - name: Restart Nginx service
+      service:
+        name: nginx
+        state: restarted
+
+    - name: Restart HAProxy service
+      service:
+        name: haproxy
+        state: restarted
+   
